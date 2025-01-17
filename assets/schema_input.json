@@ -5,17 +5,9 @@
   "items": {
     "type": "object",
     "properties": {
-      "ONT_RAW_DIR": {
-        "type": ["string", "null"],
-        "description": "Path to the directory containing all Raw ONT Reads. Use None if specifying individual read files."
-      },
       "ONT_RAW_READS": {
         "type": "string",
         "description": "Path to the combined Raw ONT FASTQ reads."
-      },
-      "ILLUMINA_RAW_DIR": {
-        "type": ["string", "null"],
-        "description": "Path to the directory containing all Raw Illumina Reads."
       },
       "ILLUMINA_RAW_F_READS": {
         "type": "string",
