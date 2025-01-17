@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Nextflow Pipeline Parameters",
+  "description": "Parameters for Nextflow pipeline including paths to raw reads and organism information.",
+  "items": {
+    "type": "object",
+    "properties": {
+      "ONT_RAW_DIR": {
+        "type": ["string", "null"],
+        "description": "Path to the directory containing all Raw ONT Reads. Use None if specifying individual read files."
+      },
+      "ONT_RAW_READS": {
+        "type": "string",
+        "description": "Path to the combined Raw ONT FASTQ reads."
+      },
+      "ILLUMINA_RAW_DIR": {
+        "type": ["string", "null"],
+        "description": "Path to the directory containing all Raw Illumina Reads."
+      },
+      "ILLUMINA_RAW_F_READS": {
+        "type": "string",
+        "description": "Path to the Raw Forward Illumina Reads."
+      },
+      "ILLUMINA_RAW_R_READS": {
+        "type": "string",
+        "description": "Path to the Raw Reverse Illumina Reads."
+      },
+      "SPECIES_ID": {
+        "type": "string",
+        "description": "Species ID formatted as <2-letters of Genus>_<full species name>."
+      },
+      "ORGANISM_KINGDOM": {
+        "type": "string",
+        "description": "Kingdom the current organism data belongs to.",
+        "default": "Funga"
+      },
+      "ORGANISM_KARYOTE": {
+        "type": "string",
+        "description": "Karyote type of the organism.",
+        "default": "Eukaryote"
+      },
+      "COMPLEASM_1": {
+        "type": "string",
+        "description": "Name of the first organism compleasm/BUSCO database to compare to.",
+        "default": "basidiomycota"
+      },
+      "COMPLEASM_2": {
+        "type": "string",
+        "description": "Name of the second organism compleasm/BUSCO database to compare to.",
+        "default": "agaricales"
+      },
+      "EST_SIZE": {
+        "type": "string",
+        "description": "Estimated size of the genome in Mbp."
+      },
+      "REF_SEQ": {
+        "type": ["string", "null"],
+        "description": "Path to the reference genome for assembly."
+      }
+    },
+    "required": ["ONT_RAW_READS", "ILLUMINA_RAW_F_READS", "ILLUMINA_RAW_R_READS", "SPECIES_ID"]
+  }
+}
