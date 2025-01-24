@@ -1,3 +1,4 @@
-ONT_RAW_READS	ILLUMINA_RAW_F_READS	ILLUMINA_RAW_R_READS	SPECIES_ID	ORGANISM_KINGDOM	ORGANISM_KARYOTE	COMPLEASM_1	COMPLEASM_2	EST_SIZE	REF_SEQ
-/path/to/ONT/sample1.fq.gz	/path/to/Illumina/sample1_R1.fq.gz	/path/to/Illumina/sample1_R2.fq.gz	AB_sample1	Funga	Eukaryote	basidiomycota	agaricales	60m	/path/to/ref_genome1.fasta
+KEY	ONT_RAW_READS	ILLUMINA_RAW_F_READS	ILLUMINA_RAW_R_READS	SPECIES_ID	ORGANISM_KINGDOM	ORGANISM_KARYOTE	COMPLEASM_1	COMPLEASM_2	EST_SIZE	REF_SEQ
+KEY1	/home/alex/projects/nf_egap/test_data/sample1.fq.gz	/home/alex/projects/nf_egap/test_data/sample1_R1.fq.gz	/home/alex/projects/nf_egap/test_data/sample1_R2.fq.gz	AB_sample1	Funga	Eukaryote	basidiomycota	agaricales	60m	/path/to/ref_genome1.fasta
+KEY2	/home/alex/projects/nf_egap/test_data/sample1.fq.gz	/home/alex/projects/nf_egap/test_data/sample1_R1.fq.gz	/home/alex/projects/nf_egap/test_data/sample1_R2.fq.gz	AB_sample1	Funga	Eukaryote	basidiomycota	agaricales	60m	/path/to/ref_genome1.fasta
 

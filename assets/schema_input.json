@@ -5,6 +5,10 @@
   "items": {
     "type": "object",
     "properties": {
+      "KEY": {
+        "type": "string",
+        "description": "Unique key for the row used to identify the row"
+      },
       "ONT_RAW_READS": {
         "type": "string",
         "description": "Path to the combined Raw ONT FASTQ reads."
