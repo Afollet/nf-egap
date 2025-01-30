@@ -13,7 +13,7 @@ params.publishDir = './results'
                             **/
 process trimmomatic {
   
-    publishDir params.publishDir + "/trimmomatic"
+    publishDir params.publishDir, mode: 'copy'
     container 'staphb/trimmomatic:0.39'
     label "trimmomatic"
 
@@ -36,6 +36,70 @@ process trimmomatic {
     ${params.ILLUMINACLIP} ${params.HEADCROP} ${params.CROP} ${params.SLIDINGWINDOW} ${params.MINLEN}
     """
 }
+
+process fastqc {
+// Short read quality control
+    label "fastqc"
+    publishDir "${params.publishDir}/qc", mode: 'copy'
+    container 'staphb/fastqc:0.12.1'
+
+    input:
+    tuple val(key), path(trimmedF), path(trimmedR)
+
+    output:
+    path "*_fastqc.{zip,html}", emit: fastqc_results
+    tuple val(key), env(total_bases), topic: "qc"
+
+    script:
+
+    key = key
+
+    """
+    fastqc -q ${trimmedF} ${trimmedR} -o .
+
+    total_bases_fwd=\$(grep "Total Sequences" ${params.publishDir}/qc/shortread/fastqc/${trimmedF}_fastqc.html | awk '{print \$3}')
+    total_bases_rev=\$(grep "Total Sequences" ${params.publishDir}/qc/shortread/fastqc/${trimmedF}_fastqc.html | awk '{print \$3}')
+    
+    total_bases=\$((total_bases_fwd + total_bases_rev))
+    """
+}
+
+process nanoplot {
+// Quality check for nanopore reads and Quality/Length Plots
+    label "nanoplot"
+    publishDir "${params.outdir}/qc/", mode: 'copy'
+    container 'staphb/nanoplot:1.42.0'
+
+    input:
+    tuple val(key), file(long_reads)
+
+    output:
+    file '*.png'
+    file '*.html'
+    file '*.txt'
+    file("*_NanoStats.txt") 
+    env(RAW_ONT_READS), topic: "qc"
+    env(RAW_ONT_MEAN_LENGTH), topic: "qc"
+    env(RAW_ONT_MEAN_QUAL), topic: "qc"
+    env(RAW_ONT_TOTAL_BASES), topic: "qc"
+
+    script:
+       /** raw_nanoplot_cmd = [ "NanoPlot", "--fastq", ONT_RAW_READS, "-t", str(CPU_THREADS),
+                                "-o", raw_nanoplot_dir, "--plots", "kde", "dot", "--loglength",
+                                "--N50", "--title", "Raw ONT Reads: Preliminary Data",
+                                "--prefix", "RawONT", "--verbose"] **/
+    """
+
+    NanoPlot --fastq  ${long_reads} -t ${params.defaultThreads}  --title ${long_reads} -c darkblue \
+    --plots kde dot --loglength --N50 --prefix ${long_reads} --verbose --prefix ${long_reads}_
+    nanostats_file="${long_reads}_NanoStats.txt"
+    RAW_ONT_READS=\$(grep -oP '(?<=Number of reads: )\\d+' "\$nanostats_file")
+    RAW_ONT_MEAN_LENGTH=\$(grep -oP '(?<=Mean read length: )[\\d.]+' "\$nanostats_file")
+    RAW_ONT_MEAN_QUAL=\$(grep -oP '(?<=Mean read quality: )[\\d.]+' "\$nanostats_file")
+    RAW_ONT_TOTAL_BASES=\$(grep -oP '(?<=Total bases: )\\d+' "\$nanostats_file")
+    """
+}
+
 
 /**
 process filtlong {
@@ -83,10 +147,22 @@ workflow {
             refSeq: it[10],
             ontRawBaseName: ontRawBaseName,   // Base name of ONT raw read file
             illuminaRawFBaseName: illuminaRawFBaseName,   // Base name of F-read file
-            illuminaRawRBaseName: illuminaRawRBaseName    // Base name of R-read file
+            illuminaRawRBaseName: illuminaRawRBaseName, // Base name of R-read file
         ]
     }
+    
+    //mappedMainChannel.view()
+
     trimmomaticOutput = trimmomatic(mappedMainChannel)
+    fastqc(trimmomaticOutput) 
+    
+    mappedMainChannel.filter { it.ontRawReads }
+        .map { [key: it.key, long_reads: file(it.ontRawReads)] }
+        .set { nanoplotInput }
+
+    nanoplotInput.view()
+
+    nanoplotOut = nanoplot(nanoplotInput) 
     //trim long nanpore with porechop?
     //filtlong(mappedMainChannel)
     // View the final channel with appended outputs
