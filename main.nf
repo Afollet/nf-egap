@@ -210,26 +210,36 @@ workflow {
             compleasm2: it[8],
             estSize: it[9],
             refSeq: it[10],
-            ontRawBaseName: ontRawBaseName,   // Base name of ONT raw read file
-            illuminaRawFBaseName: illuminaRawFBaseName,   // Base name of F-read file
-            illuminaRawRBaseName: illuminaRawRBaseName, // Base name of R-read file
         ]
     }
     
-    //mappedMainChannel.view()
-
-    trimmomaticOutput = trimmomatic(mappedMainChannel)
-    fastqc(trimmomaticOutput) 
+    trimmomaticParams = Channel.of(
+        ["${params.ILLUMINACLIP}", "${params.HEADCROP}", "${params.CROP}", "${params.SLIDINGWINDOW}", "${params.MINLEN}"]
+        )
+    barcodeFileChannel = Channel.fromPath("${params.BARCODE_FILE}")
     
-    mappedMainChannel.filter { it.ontRawReads }
-        .map { [key: it.key, long_reads: file(it.ontRawReads)] }
-        .set { nanoplotInput }
+    trimmomaticOutput = trimmomatic(dataChannel, barcodeFileChannel, trimmomaticParams)
+    bbdukOutput = bbduk(trimmomaticOutput, file("${params.BARCODE_FILE}"))
+    clumpifyOutput = clumpify(bbdukOutput)
+    fastqc(clumpifyOutput) 
+    
+    dataChannel.filter { it.ontRawReads }
+        .map { [key: it.key, long_reads: file(it.ontRawReads), defaultThreads: "${params.nanoplotThreads}"] }
+        .set { longReadsChannel } 
 
-    nanoplotInput.view()
 
-    nanoplotOut = nanoplot(nanoplotInput) 
-    //trim long nanpore with porechop?
-    //filtlong(mappedMainChannel)
-    // View the final channel with appended outputs
+    flattenedLongReadsChannel = longReadsChannel.map { [it.key, it.long_reads, it.nanoplotThreads]}
+    joinedClumpifyAndLongChannel = clumpifyOutput.join(flattenedLongReadsChannel)
+    joinedClumpifyAndLongChannel
+        .filter { it[0] && it[1] && it[2] }
+        .set{ clumpifyAndLongReads }
+
+    filtlongOutput = filtlong(clumpifyAndLongReads)
+    correctedLongReads = ratatosk(filtlongOutput.outputForRatatosk.map { it + ["${params.ratatoskThreads}"] })
+
+    filtNanoplotInput =(filtlongOutput.outputForNanoplot.map { it + [params.nanoplotThreads] })
+    correctedNanoplotInput = (correctedLongReads.map { it + [params.nanoplotThreads] })
+    nanoplot(longReadsChannel.mix(filtNanoplotInput).mix(correctedNanoplotInput))
 }
 
+//staphb/masurca:4.1.0
